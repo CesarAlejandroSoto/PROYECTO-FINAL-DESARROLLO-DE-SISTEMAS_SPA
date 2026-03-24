@@ -1,7 +1,7 @@
 const API_URL = 'https://reqres.in/api';
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
-const API_KEY = 'reqres-free-v1'; // tu API key
+const API_KEY = import.meta.env.VITE_AUTH_API_KEY || 'reqres-free-v1';
 
 export const register = async (email, password, name = '') => {
   try {
@@ -9,7 +9,6 @@ export const register = async (email, password, name = '') => {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY // <-- aquí agregas el header
       },
       body: JSON.stringify({ email, password }),
     });
@@ -38,30 +37,21 @@ export const register = async (email, password, name = '') => {
 
 export const login = async (email, password) => {
   try {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY // <-- aquí también
-      },
-      body: JSON.stringify({ email, password }),
-    });
+    // Simulamos login local para evitar CORS
+    if (email === 'eve.holt@reqres.in' && password === 'cityslicka') {
+      const token = 'QpwL5tke4Pnpja7X4'; // Token simulado
+      localStorage.setItem(TOKEN_KEY, token);
 
-    const data = await response.json();
+      const userInfo = {
+        email,
+        id: Date.now().toString(),
+      };
+      localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Error en el login');
+      return { success: true, user: userInfo };
+    } else {
+      return { success: false, message: 'Email o contraseña inválidos' };
     }
-
-    localStorage.setItem(TOKEN_KEY, data.token);
-
-    const userInfo = {
-      email,
-      id: Date.now().toString(),
-    };
-    localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
-
-    return { success: true, user: userInfo };
   } catch (error) {
     console.error('Error en login:', error);
     return { success: false, message: error.message };
