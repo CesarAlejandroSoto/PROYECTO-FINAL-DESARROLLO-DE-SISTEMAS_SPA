@@ -6,14 +6,23 @@ import MovieList from '../components/MovieList';
 const Favorites = () => {
   // Estado para almacenar las películas favoritas
   const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Hook para cambiar de ruta programáticamente
   const navigate = useNavigate();
 
   // Cargar las películas favoritas al montar el componente
   useEffect(() => {
-    const favs = getFavorites(); // Obtener favoritos guardados en localStorage
-    setFavorites(favs);          // Actualizar estado con favoritos
+    const result = getFavorites(); // Obtener favoritos guardados en localStorage
+    if (result.success) {
+      setFavorites(result.data); // Actualizar estado con favoritos
+      setError(null);
+    } else {
+      setFavorites([]);
+      setError(result.error || 'Error al cargar favoritos');
+    }
+    setLoading(false);
   }, []);
 
   // Función para navegar a la página principal al hacer click en el botón
@@ -38,10 +47,36 @@ const Favorites = () => {
         <h2 className="text-2xl font-bold text-gray-800">Mis Favoritos ❤️</h2>
       </div>
       
+      {/* Mostrar estado de carga */}
+      {loading && (
+        <div className="text-center py-8">
+          <p className="text-gray-600">Cargando tus favoritos...</p>
+        </div>
+      )}
+      
+      {/* Mostrar error si ocurrió */}
+      {error && !loading && (
+        <div className="text-center py-8">
+          <p className="text-red-600">⚠️ {error}</p>
+        </div>
+      )}
+      
       {/* Mostrar la lista de películas favoritas */}
-      <MovieList movies={favorites} />
+      {!loading && !error && (
+        <>
+          {favorites.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No tienes favoritos aún</p>
+              <p className="text-gray-500 text-sm mt-2">Añade películas desde la página principal</p>
+            </div>
+          ) : (
+            <MovieList movies={favorites} />
+          )}
+        </>
+      )}
     </div>
   );
 };
+
 
 export default Favorites;

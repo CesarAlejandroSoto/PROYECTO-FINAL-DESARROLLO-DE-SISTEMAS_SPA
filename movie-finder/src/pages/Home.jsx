@@ -17,12 +17,15 @@ const Home = () => {
   const [totalResults, setTotalResults] = useState(0);
   // Estado para saber si el usuario está realizando una búsqueda o no
   const [isSearching, setIsSearching] = useState(false);
+  // Estado para controlar el estado de carga mientras se obtienen resultados
+  const [isLoading, setIsLoading] = useState(false);
 
   // Función que maneja la búsqueda de películas
   const handleSearch = async (searchQuery, newPage = 1) => {
     setQuery(searchQuery);     // Actualiza la consulta
     setPage(newPage);          // Actualiza la página
     setIsSearching(true);      // Marca que se está buscando
+    setIsLoading(true);        // Activa el estado de loading
     
     try {
       // Llama al servicio para buscar películas según la consulta y página
@@ -34,6 +37,8 @@ const Home = () => {
       // En caso de error limpia la lista y total
       setMovies([]);
       setTotalResults(0);
+    } finally {
+      setIsLoading(false);     // Desactiva el loading cuando termina
     }
   };
 
@@ -216,17 +221,41 @@ const Home = () => {
           </div>
         )}
 
-        {/* Mensaje cuando no hay resultados en la búsqueda */}
-        {isSearching && movies.length === 0 && query && (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-700 mb-2">
-              No se encontraron resultados
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Intenta con otros términos de búsqueda
+        {/* Loading Spinner - Mostrado mientras se buscan películas */}
+        {isSearching && isLoading && movies.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24">
+            {/* Spinner animado */}
+            <div className="relative w-16 h-16 mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-blue-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 border-r-blue-600 animate-spin"></div>
+            </div>
+            
+            {/* Texto de carga */}
+            <p className="text-lg font-semibold text-gray-700 mb-1">
+              Buscando películas...
             </p>
-            <div className="flex justify-center gap-4">
+            <p className="text-sm text-gray-500">
+              Por favor espera mientras buscamos "{query}"
+            </p>
+          </div>
+        )}
+
+        {/* Empty State - Mostrado cuando no hay resultados después de buscar */}
+        {isSearching && !isLoading && movies.length === 0 && query && (
+          <div className="flex flex-col items-center justify-center py-24">
+            {/* Icono emoji grande */}
+            <div className="text-7xl mb-6 animate-bounce">🎬</div>
+            
+            {/* Título y descripción */}
+            <h3 className="text-3xl font-bold text-gray-800 mb-3">
+              Oops, sin resultados
+            </h3>
+            <p className="text-gray-600 text-lg mb-8 max-w-md text-center">
+              No encontramos películas que coincidan con "<strong>{query}</strong>"
+            </p>
+            
+            {/* Botones de acción */}
+            <div className="flex gap-4 flex-wrap justify-center">
               <button
                 onClick={() => {
                   setQuery('');
@@ -235,19 +264,27 @@ const Home = () => {
                   setPage(1);
                   setTotalResults(0);
                 }}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🏠 Volver al Inicio
               </button>
               <button
                 onClick={() => handleSearch('popular', 1)}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-300"
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🌟 Ver Populares
+              </button>
+              <button
+                onClick={() => handleSearch('top rated', 1)}
+                className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                ⭐ Top Rated
               </button>
             </div>
           </div>
         )}
+
+
       </div>
     </div>
   );
