@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd movie-finder && npm run build",
+  "outputDirectory": "movie-finder/dist"
+}
