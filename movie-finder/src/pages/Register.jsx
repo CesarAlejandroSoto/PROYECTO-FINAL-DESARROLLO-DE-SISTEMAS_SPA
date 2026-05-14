@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { register } from '../services/authService';
+import { register as registerService } from '../services/authService';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Register = () => {
   const [email, setEmail] = useState('eve.holt@reqres.in'); // email por defecto válido
@@ -7,6 +8,8 @@ const Register = () => {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,12 +23,16 @@ const Register = () => {
 
     setLoading(true);
 
-    const result = await register(email, password);
+    const result = await registerService(email, password);
 
     setLoading(false);
 
     if (result.success) {
-      setSuccessMsg('Registro exitoso, ¡bienvenido ' + email + '!');
+      setSuccessMsg('¡Registro exitoso! Redirigiendo a login...');
+      setEmail('');
+      setPassword('');
+      // Redirige a login después de 2 segundos
+      setTimeout(() => navigate('/login'), 2000);
     } else {
       setError(result.message);
     }
@@ -70,6 +77,14 @@ const Register = () => {
 
       {error && <p className="mt-4 text-red-600 font-semibold">{error}</p>}
       {successMsg && <p className="mt-4 text-green-600 font-semibold">{successMsg}</p>}
+
+      {/* Link para ir a login */}
+      <p className="mt-6 text-center text-gray-600">
+        ¿Ya tienes cuenta?{' '}
+        <Link to="/login" className="text-blue-600 hover:underline">
+          Inicia sesión aquí
+        </Link>
+      </p>
     </form>
   );
 };

@@ -70,45 +70,33 @@ const getHttpErrorMessage = (status) => {
  * @param {string} password - Contraseña (mínimo 6 caracteres)
  * @param {string} [name=''] - Nombre del usuario (opcional)
  * @returns {Promise<{success: boolean, user?: object, message?: string}>}
- *          - success: true y user si el registro es exitoso
+ *          - success: true si el registro es exitoso
  *          - success: false y message si falla
  */
 export const register = async (email, password, name = '') => {
   try {
-    // Validar inputs antes de enviar al servidor
+    // Validar inputs antes de procesar
     validateEmail(email);
     validatePassword(password);
 
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email.trim(), password }),
-    });
+    // Verificar si el usuario ya existe
+    const existingUsers = localStorage.getItem('registered_users');
+    const users = existingUsers ? JSON.parse(existingUsers) : {};
 
-    // Parsear respuesta de forma segura
-    const data = await safeParseJSON(response);
-
-    // Si no hay respuesta OK, lanzar error con mensaje apropiado
-    if (!response.ok) {
-      const errorMessage = data?.error || getHttpErrorMessage(response.status);
-      throw new Error(errorMessage);
+    if (users[email]) {
+      return { success: false, message: 'El email ya está registrado.' };
     }
 
-    // Validar que la respuesta tenga el token esperado
-    if (!data || !data.token) {
-      throw new Error('Respuesta inválida del servidor.');
-    }
-
-    localStorage.setItem(TOKEN_KEY, data.token);
-
+    // Crear nuevo usuario (SIN guardar token - solo registrar)
     const userInfo = {
       email: email.trim(),
-      name,
-      id: data.id || Date.now().toString(),
+      name: name || email.split('@')[0],
+      id: Date.now().toString(),
     };
-    localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
+
+    // Guardar usuario en registro local (sin token)
+    users[email] = { ...userInfo, password };
+    localStorage.setItem('registered_users', JSON.stringify(users));
 
     return { success: true, user: userInfo };
   } catch (error) {
@@ -131,7 +119,7 @@ export const login = async (email, password) => {
     validateEmail(email);
     validatePassword(password);
 
-    // Simulamos login local para evitar CORS
+    // Usuario de prueba de reqres.in
     if (email === 'eve.holt@reqres.in' && password === 'cityslicka') {
       const token = 'QpwL5tke4Pnpja7X4'; // Token simulado
       localStorage.setItem(TOKEN_KEY, token);
@@ -143,9 +131,31 @@ export const login = async (email, password) => {
       localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
 
       return { success: true, user: userInfo };
-    } else {
-      return { success: false, message: 'Email o contraseña inválidos' };
     }
+
+    // Verificar en usuarios registrados localmente
+    const existingUsers = localStorage.getItem('registered_users');
+    if (existingUsers) {
+      const users = JSON.parse(existingUsers);
+      const user = users[email];
+
+      if (user && user.password === password) {
+        const token = 'token_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem(TOKEN_KEY, token);
+
+        const userInfo = {
+          email: user.email,
+          name: user.name,
+          id: user.id,
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(userInfo));
+
+        return { success: true, user: userInfo };
+      }
+    }
+
+    // Si no coincide con ninguno
+    return { success: false, message: 'Email o contraseña inválidos' };
   } catch (error) {
     console.error('Error en login:', error);
     return { success: false, message: error.message };

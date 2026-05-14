@@ -1,20 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { isAuthenticated, getCurrentUser, logout } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isLoggedIn, currentUser, logout } = useAuth();
 
   // Estado para controlar la visibilidad del menú móvil
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Estado para controlar la visibilidad del menú de usuario (desktop)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
-  // Verifica si el usuario está autenticado
-  const isLoggedIn = isAuthenticated();
-  // Obtiene datos del usuario actual
-  const currentUser = getCurrentUser();
 
   // Función para cerrar sesión y redirigir a login
   const handleLogout = () => {

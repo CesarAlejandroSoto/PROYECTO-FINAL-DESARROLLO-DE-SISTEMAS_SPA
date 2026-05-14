@@ -7,25 +7,41 @@ import MovieDetails from './pages/MovieDetails';
 import Login from './pages/Login';
 import Register from './pages/Register.jsx';
 
-
 import ProtectedRoute from './components/ProtectedRoute';
-import { isAuthenticated } from './services/authService';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const App = () => (
-  <Router>
-    <NavBar />
+/**
+ * Componente interno que maneja las rutas
+ * Necesita estar dentro del AuthProvider para usar useAuth
+ */
+const AppRoutes = () => {
+  const { isLoggedIn, loading } = useAuth();
+
+  // Mostrar loading mientras se verifica la autenticación
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🎬</div>
+          <div className="text-xl text-gray-600">Cargando...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
     <Routes>
       {/* Rutas públicas */}
       <Route
         path="/login"
-        element={isAuthenticated() ? <Navigate to="/" /> : <Login />}
+        element={isLoggedIn ? <Navigate to="/" /> : <Login />}
       />
       <Route
         path="/register"
-        element={isAuthenticated() ? <Navigate to="/" /> : <Register />}
+        element={isLoggedIn ? <Navigate to="/" /> : <Register />}
       />
 
       {/* Rutas protegidas */}
@@ -55,10 +71,18 @@ const App = () => (
       />
 
       {/* Redirección para rutas no encontradas */}
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to={isLoggedIn ? "/" : "/login"} />} />
     </Routes>
+  );
+};
 
-    <ToastContainer position="top-right" autoClose={3000} />
+const App = () => (
+  <Router>
+    <AuthProvider>
+      <NavBar />
+      <AppRoutes />
+      <ToastContainer position="top-right" autoClose={3000} />
+    </AuthProvider>
   </Router>
 );
 

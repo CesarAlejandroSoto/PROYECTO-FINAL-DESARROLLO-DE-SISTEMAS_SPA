@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { login } from '../services/authService';
+import { login as loginService } from '../services/authService';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   // Estados para manejar email, contraseña, error y carga
@@ -10,6 +11,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
+  const { login: updateAuthState } = useAuth();
 
   // Maneja el envío del formulario
   const handleSubmit = async (e) => {
@@ -25,10 +27,12 @@ const Login = () => {
     setLoading(true);
     try {
       // Llama al servicio de login con email y contraseña
-      const result = await login(email, password);
+      const result = await loginService(email, password);
 
       if (result.success) {
-        // Si es exitoso, limpia el formulario y redirige al inicio
+        // Actualiza el estado de autenticación en el contexto
+        updateAuthState(result.user);
+        // Limpia el formulario y redirige al inicio
         setEmail('');
         setPassword('');
         navigate('/');
